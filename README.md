@@ -114,7 +114,7 @@ If you change the scroll key later, every Defy key that sent the old one is chan
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/menu-bar-icons-dark.png">
-  <img src="docs/screenshots/menu-bar-icons.png" alt="The menu bar icon in each state: normal, active, paused, Bazecor, permissions and no keyboard" width="400">
+  <img src="docs/screenshots/menu-bar-icons.png" alt="The menu bar icon in each state: normal, active, paused, Bazecor, warning and no keyboard" width="400">
 </picture>
 
 | Icon | Means |
@@ -123,13 +123,14 @@ If you change the scroll key later, every Defy key that sent the old one is chan
 | active | The Auto-Mouse Layer is on |
 | paused | Paused from the menu or the pause shortcut |
 | Bazecor | Bazecor is open, so the app has let go of the keyboard |
-| permissions | A permission is missing; the window says which |
+| warning | A permission is missing, or another app has the trackball to itself; the window says which |
 | no keyboard | No Defy on USB. It's picked up within a second of plugging it in |
 
 ## Troubleshooting
 
 - **The log:** **Show Log** in the menu opens `~/Library/Logs/dygma-auto-mouse-helper.log`. **Detailed log** adds every layer change and button press.
 - **The layer doesn't turn on:** the Defy has to be on USB, not Bluetooth, and Bazecor has to be closed. The General tab shows whether the app has the keyboard.
+- **Another app has the trackball to itself:** key remappers such as kanata (used by Mantle) and Karabiner-Elements take over every device they're set to remap, and then no other app can read it. Set yours to leave the trackball alone, or quit it. The helper picks the trackball up as soon as it's let go. A remapper that takes only the Defy doesn't get in the way.
 - **The pointer doesn't move:** Toggle Scroll is on (the icon stays green). Press a scroll button or key once.
 - **Bazecor can't find the keyboard:** the app lets go of it when Bazecor opens. For another app that needs it, add that app's bundle ID to `keyboard.pauseWhileRunning`, or pause the helper.
 - **Talking to the keyboard by hand:** `tools/focus.py layer.state` sends a Focus command. Pause the helper first.

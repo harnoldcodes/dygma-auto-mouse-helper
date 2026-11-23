@@ -147,7 +147,7 @@ struct IconStrip: View {
       ("active", StatusIcon.image(active: true, description: ""), nil),
       ("paused", StatusIcon.image(active: false, dimmed: true, badge: .paused, description: ""), nil),
       ("Bazecor", StatusIcon.image(active: false, dimmed: true, badge: .pausedBy, description: ""), nil),
-      ("permissions", StatusIcon.image(active: false, dimmed: true, badge: .warning, description: ""), nil),
+      ("warning", StatusIcon.image(active: false, dimmed: true, badge: .warning, description: ""), nil),
       ("no keyboard", StatusIcon.image(active: false, dimmed: true, badge: .noKeyboard, description: ""), nil),
     ]
     HStack(spacing: 24) {

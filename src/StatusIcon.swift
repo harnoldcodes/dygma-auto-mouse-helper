@@ -6,7 +6,7 @@ enum StatusIcon {
   enum Badge {
     case paused     // paused from the menu: a pause mark knocked out of a solid dot
     case pausedBy   // an app such as Bazecor has the keyboard: a red dot with a pause mark
-    case warning    // permissions missing: an orange dot with an exclamation mark
+    case warning    // permissions missing or a trackball out of reach: an orange dot with an exclamation mark
     case noKeyboard // no Dygma keyboard on USB: a cross knocked out of a solid dot
   }
 

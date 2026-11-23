@@ -88,6 +88,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
       .receive(on: RunLoop.main)
       .sink { [weak self] _ in self?.updateIcon() }
       .store(in: &subs)
+    // A trackball held by another app, or ticked or unticked while held.
+    Publishers.CombineLatest3(devices.$connected, devices.$openFailure, store.$config)
+      .receive(on: RunLoop.main)
+      .sink { [weak self] _ in self?.updateIcon() }
+      .store(in: &subs)
 
     DistributedNotificationCenter.default().addObserver(forName: AppDelegate.showNotification, object: nil, queue: .main) {
       [weak self] _ in self?.showSettings()
@@ -213,12 +218,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
   static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
   static var isDevBuild: Bool { version.contains("-dev+") }
 
-  private enum IconState { case needsPermission, pausedBy, paused, noKeyboard, idle, autoMouseLayer, dragScroll, toggleScroll }
+  private enum IconState {
+    case needsPermission, pausedBy, paused, trackballProblem, noKeyboard, idle, autoMouseLayer, dragScroll, toggleScroll
+  }
 
   private var iconState: IconState {
     if !permissions.allGranted { return .needsPermission }
     if model.pausedBy != nil { return .pausedBy }
     if engine.userPaused { return .paused }
+    if devices.openFailure != nil || !devices.held(store.config).isEmpty { return .trackballProblem }
     if case .open = model.focusStatus {} else { return .noKeyboard }
     switch engine.scroll {
     case .drag: return .dragScroll
@@ -234,6 +242,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
       let app = model.pausedBy ?? "Bazecor"
       return "Turned off while \(app) is open. Quit \(app) to give control back."
     case .paused: return "Paused"
+    case .trackballProblem:
+      let held = devices.held(store.config)
+      if held.isEmpty { return "Can't read the mice and trackballs (open Settings)" }
+      if held.count > 1 { return "Other apps have \(held.count) of your trackballs to themselves (open Settings)" }
+      return "\(held[0].holder ?? "Another app") has \(held[0].name) to itself (open Settings)"
     case .noKeyboard: return "No Dygma keyboard connected by USB"
     case .idle: return "Ready"
     case .autoMouseLayer: return "Auto-Mouse Layer on"
@@ -250,6 +263,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
       case .needsPermission: return StatusIcon.image(active: false, dimmed: true, badge: .warning, description: text)
       case .pausedBy: return StatusIcon.image(active: false, dimmed: true, badge: .pausedBy, description: text)
       case .paused: return StatusIcon.image(active: false, dimmed: true, badge: .paused, description: text)
+      case .trackballProblem: return StatusIcon.image(active: false, dimmed: true, badge: .warning, description: text)
       case .noKeyboard: return StatusIcon.image(active: false, dimmed: true, badge: .noKeyboard, description: text)
       case .idle: return StatusIcon.image(active: false, description: text)
       case .autoMouseLayer, .dragScroll, .toggleScroll: return StatusIcon.image(active: true, description: text)

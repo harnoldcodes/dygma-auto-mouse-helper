@@ -32,6 +32,7 @@ struct SettingsView: View {
   @EnvironmentObject var permissions: Permissions
   @EnvironmentObject var model: AppModel
   @EnvironmentObject var keyboard: KeyboardModel
+  @EnvironmentObject var devices: Devices
   @State private var tab: SettingsTab
 
   init(app: AppDelegate, tab: SettingsTab = .general) {
@@ -43,6 +44,9 @@ struct SettingsView: View {
     VStack(spacing: 0) {
       if let other = model.pausedBy { PausedByBanner(app: other).padding([.horizontal, .top]) }
       if !permissions.allGranted { PermissionBanner().padding([.horizontal, .top]) }
+      if devices.openFailure != nil || !devices.held(store.config).isEmpty {
+        TrackballProblemBanner().padding([.horizontal, .top])
+      }
       if case .notFound = model.focusStatus, model.pausedBy == nil { NoKeyboardBanner().padding([.horizontal, .top]) }
       if !store.warnings.isEmpty { WarningBanner().padding([.horizontal, .top]) }
       if !keyboard.followNotices(store.config).isEmpty || !keyboard.waitingNotices(store.config).isEmpty {
@@ -324,6 +328,42 @@ struct NoKeyboardBanner: View {
   }
 }
 
+/// A ticked trackball that another app has to itself (a key remapper such as kanata), or mice
+/// and trackballs macOS won't open: either way the helper can't see the ball move.
+struct TrackballProblemBanner: View {
+  @EnvironmentObject var store: ConfigStore
+  @EnvironmentObject var devices: Devices
+
+  var body: some View {
+    let held = devices.held(store.config)
+    HStack(alignment: .top, spacing: 10) {
+      Image(systemName: "exclamationmark.triangle.fill").font(.title2).foregroundStyle(.orange)
+      VStack(alignment: .leading, spacing: 3) {
+        if let failure = devices.openFailure {
+          Text("Can't read the mice and trackballs").font(.headline)
+          Text("\(failure), so the helper can't see the ball move. Quit and reopen the helper; if it keeps "
+               + "happening, Show Log (General tab) says more.")
+            .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+        ForEach(held, id: \.key) { d in
+          Text("\(d.holder ?? "Another app") has \(d.name) to itself").font(.headline)
+        }
+        if !held.isEmpty {
+          Text("While it does, the helper can't see the ball move or its scroll button, so nothing switches "
+               + "the Auto-Mouse Layer. Key remappers such as kanata (used by Mantle) and Karabiner-Elements "
+               + "take over every device they're set to remap: set yours to leave the trackball alone, or quit "
+               + "it. The helper picks the trackball up as soon as it's let go.")
+            .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+      }
+      Spacer(minLength: 0)
+    }
+    .padding(12)
+    .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.12)))
+    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.orange.opacity(0.4)))
+  }
+}
+
 struct WarningBanner: View {
   @EnvironmentObject var store: ConfigStore
 
@@ -353,7 +393,9 @@ struct GeneralTab: View {
     Form {
       Section("Status") {
         LabeledContent("Keyboard") { Text(keyboardText).foregroundStyle(keyboardOK ? .primary : .secondary) }
-        LabeledContent("Trackballs") { Text(trackballText).foregroundStyle(.secondary) }
+        LabeledContent("Trackballs") {
+          Text(trackballText).foregroundStyle(devices.held(store.config).isEmpty && devices.openFailure == nil ? Color.secondary : .orange)
+        }
         LabeledContent("Auto-Mouse Layer") {
           Text(engine.scroll == .toggle ? "on, Toggle Scroll" : engine.scroll == .drag ? "on, Drag Scroll"
                : engine.layerActive ? "on" : "off")
@@ -420,7 +462,10 @@ struct GeneralTab: View {
     let chosen = store.config.devices
     if chosen.isEmpty { return "none chosen (see Scroll Button)" }
     let on = chosen.filter { d in devices.connected.contains { $0.vendorId == d.vendorId && $0.productId == d.productId } }
+    if devices.openFailure != nil { return "\(chosen.count) chosen; macOS won't open them" }
     if !devices.opened { return "\(chosen.count) chosen; waiting for Input Monitoring" }
+    let held = devices.held(store.config)
+    if !held.isEmpty { return "\(on.count) of \(chosen.count) chosen connected; \(held.count) held by another app" }
     return "\(on.count) of \(chosen.count) chosen connected"
   }
 }
@@ -514,12 +559,15 @@ struct ScrollButtonTab: View {
     var ref: DeviceRef
     var detail: String
     var connected: Bool
+    var held = false
+    var holder: String?
   }
 
   private var rows: [Row] {
     var r = devices.connected.map {
       Row(ref: DeviceRef(vendorId: $0.vendorId, productId: $0.productId, name: $0.name),
-          detail: [$0.manufacturer, $0.key, $0.transport].filter { !$0.isEmpty }.joined(separator: " · "), connected: true)
+          detail: [$0.manufacturer, $0.key, $0.transport].filter { !$0.isEmpty }.joined(separator: " · "), connected: true,
+          held: $0.held, holder: $0.holder)
     }
     for d in store.config.devices where !r.contains(where: { $0.ref.key == d.key }) {
       r.append(Row(ref: d, detail: "\(d.key) · not connected", connected: false))
@@ -546,12 +594,16 @@ struct ScrollButtonTab: View {
                   Text(row.ref.name.isEmpty ? "Unnamed device" : row.ref.name)
                     .foregroundStyle(row.connected ? .primary : .secondary)
                   Text(row.detail).font(.caption).foregroundStyle(.secondary)
+                  if row.held {
+                    Label("\(row.holder ?? "Another app") has it to itself, so the helper can't read it",
+                          systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
+                  }
                 }
               }
             }
             .toggleStyle(.checkbox)
             if let ref = store.config.device(row.ref.vendorId, row.ref.productId) {
-              ScrollButtonRow(device: ref, connected: row.connected).padding(.leading, 38)
+              ScrollButtonRow(device: ref, connected: row.connected && !row.held).padding(.leading, 38)
             }
           }
         }

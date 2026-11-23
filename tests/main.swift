@@ -250,5 +250,12 @@ wait(0.6)
 check(parseConfig(Data(file().utf8)).config == store.config, "a deleted file is written back")
 try? FileManager.default.removeItem(atPath: dir)
 
+print("devices: naming the app that holds a trackball")
+check(knownHolder(["pid 1304, kanata_macos_arm", "pid 88, WindowServer"], ownPid: 50) == "kanata (Mantle)", "kanata, as Mantle runs it")
+check(knownHolder(["pid 88, WindowServer", "pid 412, Karabiner-Core-Service"], ownPid: 50) == "Karabiner-Elements", "Karabiner-Elements")
+check(knownHolder(["pid 50, kanata"], ownPid: 50) == nil, "never this app")
+check(knownHolder(["pid 88, WindowServer", "pid 91, Discord"], ownPid: 50) == nil, "an app that only reads the device isn't named")
+check(knownHolder(["garbage", "pid x, kanata", ""], ownPid: 50) == nil, "malformed entries are skipped")
+
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)
