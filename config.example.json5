@@ -1,0 +1,101 @@
+// Dygma Auto-Mouse Helper settings. The app keeps this file up to date when you change a
+// setting in its window, and picks up edits made here within a moment. Comments you add
+// are not kept: the app rewrites the file in this form.
+//
+// JSON5: JSON with comments and trailing commas allowed. Every setting is optional; one
+// that is missing or can't be used keeps its default, and the app's window lists why.
+{
+  "general": {
+    // Show the helper's icon in the menu bar. The ring in its middle fills with green while the
+    // Auto-Mouse Layer is on.
+    "showMenuBarIcon": true,
+    // Show the helper in the Dock and the app switcher while it runs.
+    "showInDock": false,
+    // Start the helper when you log in.
+    "startAtLogin": true,
+    // A keyboard shortcut that pauses and resumes the helper from anywhere (null: none).
+    // "key" is a key name or macOS key code; "modifiers" any of "Control", "Option",
+    // "Shift" and "Command". F-keys work without modifiers.
+    "pauseShortcut": null,
+  },
+
+  "keyboard": {
+    // USB vendor ID of the keyboard (0x35ef). Dygma's is 13807 (0x35ef).
+    "vendorId": 13807,
+    // USB product IDs to look for (0x0010, 0x0012). The Defy's are 16 (wired) and 18 (wireless).
+    "productIds": [16, 18],
+    // The Auto-Mouse Layer, counted from 0 as the keyboard does (Bazecor counts from 1, so
+    // this is Bazecor's layer 9).
+    "autoMouseLayer": 8,
+    // Apps that need the keyboard's connection; the helper lets go while one runs.
+    "pauseWhileRunning": ["com.dygmalab.bazecor"],
+  },
+
+  "trackballs": {
+    // The mice and trackballs whose movement turns on the Auto-Mouse Layer, and that can
+    // scroll. Each one's scrollButton (null: none) is for Drag Scroll while held and Toggle
+    // Scroll when tapped. An ordinary mouse button (usagePage 9) stops clicking; the left
+    // and right buttons can't be used.
+    "devices": [
+      {
+        "vendorId": 1149, "productId": 8257,  // 047d:2041
+        "name": "Kensington Slimblade",
+        "scrollButton": { "usagePage": 65280, "usage": 2 },  // Slimblade top-right button
+      },
+    ],
+    // Toggle Scroll: tap a scroll button to stay in Scroll Mode until the next press of a
+    // scroll button or a scroll key.
+    "tapToToggleScroll": true,
+    // A press shorter than this many milliseconds...
+    "tapMaxMs": 250,
+    // ...with at most this much ball movement counts as a tap.
+    "tapMaxMotion": 10,
+  },
+
+  "layer": {
+    // Ball movement (|x| + |y|, in device counts) that switches to the layer...
+    "activationThreshold": 10,
+    // ...within this many milliseconds. Smaller bumps of the ball are ignored.
+    "activationWindowMs": 250,
+    // The idle timeout: leave the layer after this many milliseconds without ball
+    // movement or clicks.
+    "idleTimeoutMs": 400,
+  },
+
+  "scroll": {
+    // The scroll key: Drag Scroll while held, Toggle Scroll when tapped. A key name such
+    // as "F20" or "Page Down", a macOS key code (0-127), or null for none. F13 to F20 type
+    // nothing on a Mac. The helper swallows the key, so apps never see it.
+    "key": "F20",
+    // Keys that scroll in one direction only, instead of or as well as "key" (null: none).
+    "verticalKey": null,
+    "horizontalKey": null,
+    // What horizontalKey scrolls with: "sideways" (rolling the ball sideways),
+    // "upMovesLeft" (rolling it up moves the page left, down moves it right) or
+    // "upMovesRight". With either of the last two, invertX doesn't apply to it.
+    "horizontalKeyRolling": "sideways",
+    // Up and down: pixels scrolled per count of ball movement, and whether to reverse
+    // (false: the content follows the ball, as on a trackpad).
+    "gainY": 3.0,
+    "invertY": false,
+    // Sideways, the same.
+    "gainX": 3.0,
+    "invertX": false,
+    // Toggle Scroll: tap a scroll key to stay in Scroll Mode until the next press of a
+    // scroll key or a scroll button.
+    "tapToToggleScroll": true,
+    // true: the keys use the scroll buttons' tapMaxMs and tapMaxMotion (in "trackballs"),
+    // and the two below are kept the same as those.
+    "sameTapTiming": true,
+    // A press shorter than this many milliseconds...
+    "tapMaxMs": 250,
+    // ...with at most this much ball movement counts as a tap.
+    "tapMaxMotion": 10,
+  },
+
+  "log": {
+    // Log every layer change, scroll change and trackball button press to
+    // ~/Library/Logs/dygma-auto-mouse-helper.log.
+    "verbose": false,
+  },
+}
