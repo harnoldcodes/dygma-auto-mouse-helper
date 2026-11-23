@@ -1,6 +1,6 @@
 cask "dygma-auto-mouse-helper" do
-  version "0.1.0"
-  sha256 "9a462b42244cc940aeec1426b0bafbc88fbdcb98e67b49ac0b608c3d5e60155d"
+  version "0.1.1"
+  sha256 "937bd1bc7bacf139208ca1df5e224a9e21c024fc5e49a36180fc172d86951175"
 
   url "https://github.com/harnoldcodes/dygma-auto-mouse-helper/releases/download/v#{version}/Dygma-Auto-Mouse-Helper-#{version}.zip"
   name "Dygma Auto-Mouse Helper"
